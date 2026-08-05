@@ -1,0 +1,33 @@
+# dependencies
+/frontend/node_modules
+/frontend/.pnp
+frontend/.pnp.js
+
+# testing
+/frontend/coverage
+
+# production
+/frontend/build
+
+# python
+backend/__pycache__/
+backend/**/__pycache__/
+*.pyc
+backend/venv/
+backend/.venv/
+
+# assessment instructions (not part of the solution)
+*.pdf
+
+# misc
+.DS_Store
+**/.DS_Store
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

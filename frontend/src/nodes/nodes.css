@@ -1,0 +1,36 @@
+/* nodes.css */
+/* Minimal structural styling for Part 1 - real visual design comes in Part 2. */
+
+.node {
+  min-width: 200px;
+  padding: 10px 12px;
+  border: 1px solid black;
+  border-radius: 4px;
+  background: white;
+  box-sizing: border-box;
+}
+
+.node-header {
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+
+.node-description {
+  margin-bottom: 6px;
+}
+
+.node-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.node-field {
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+}
+
+.node-field-input {
+  margin-top: 2px;
+}
