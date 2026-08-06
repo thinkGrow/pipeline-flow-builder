@@ -1,0 +1,29 @@
+.submit-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px 28px;
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+}
+
+.submit-button {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-bg);
+  background: var(--color-text);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 12px 28px;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.submit-button:hover {
+  background: var(--color-accent);
+}
+
+.submit-button:active {
+  transform: scale(0.97);
+}

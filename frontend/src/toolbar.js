@@ -2,12 +2,13 @@
 
 import { DraggableNode } from './draggableNode';
 import { nodeConfigs } from './nodes/nodeConfigs';
+import './toolbar.css';
 
 export const PipelineToolbar = () => {
 
     return (
-        <div style={{ padding: '10px' }}>
-            <div style={{ marginTop: '20px', display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+        <div className="toolbar">
+            <div className="toolbar-inner">
                 {nodeConfigs.map((config) => (
                     <DraggableNode key={config.type} type={config.type} label={config.label} />
                 ))}
