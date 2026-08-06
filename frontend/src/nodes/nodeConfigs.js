@@ -58,8 +58,30 @@ export const nodeConfigs = [
   {
     type: 'text',
     label: 'Text',
-    fields: [{ key: 'text', label: 'Text', type: 'text', default: '{{input}}' }],
+    fields: [{ key: 'text', label: 'Text', type: 'textarea', default: '{{input}}' }],
     handles: [{ id: 'output', type: 'source', side: 'right' }],
+    // Scans the current text for {{variableName}} and adds one target
+    // handle per unique variable found - this is the "escape hatch" that
+    // lets a node's handles depend on its own live content.
+    getExtraHandles: (fieldValues) => {
+      const text = fieldValues.text ?? '';
+      const variablePattern = /\{\{\s*([A-Za-z_$][A-Za-z0-9_$]*)\s*\}\}/g;
+      const seen = new Set();
+      const handles = [];
+      for (const match of text.matchAll(variablePattern)) {
+        const variableName = match[1];
+        if (!seen.has(variableName)) {
+          seen.add(variableName);
+          handles.push({
+            id: `var-${variableName}`,
+            type: 'target',
+            side: 'left',
+            label: variableName,
+          });
+        }
+      }
+      return handles;
+    },
   },
 
   // --- 5 new node types demonstrating the abstraction ---

@@ -46,9 +46,24 @@ export const useStore = create((set, get) => ({
           if (node.id === nodeId) {
             node.data = { ...node.data, [fieldName]: fieldValue };
           }
-  
+
           return node;
         }),
       });
+    },
+    // Drops any edge attached to a handle that no longer exists on a node
+    // (e.g. a {{variable}} was removed from a Text node's content), so a
+    // stale connection doesn't get silently mis-rendered onto another handle.
+    removeStaleEdges: (nodeId, validHandleIds) => {
+      const validSet = new Set(validHandleIds);
+      const edges = get().edges;
+      const nextEdges = edges.filter((edge) => {
+        const sourceOk = edge.source !== nodeId || validSet.has(edge.sourceHandle);
+        const targetOk = edge.target !== nodeId || validSet.has(edge.targetHandle);
+        return sourceOk && targetOk;
+      });
+      if (nextEdges.length !== edges.length) {
+        set({ edges: nextEdges });
+      }
     },
   }));

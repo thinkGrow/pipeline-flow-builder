@@ -1,8 +1,10 @@
 // BaseNode.js
 // The generic renderer every node type is built from: a title, a list of
-// fields, and a list of connector Handles (auto-spaced per side).
+// fields, and a list of connector Handles (auto-spaced per side). Handles
+// can also be computed live from field values via spec.getExtraHandles.
 
-import { Handle, Position } from 'reactflow';
+import { useEffect } from 'react';
+import { Handle, Position, useUpdateNodeInternals } from 'reactflow';
 import { useStore } from '../store';
 import { NodeField } from './NodeField';
 import './nodes.css';
@@ -17,11 +19,13 @@ const SIDE_TO_POSITION = {
 const isVerticalSide = (side) => side === 'left' || side === 'right';
 
 // Spreads N handles evenly along the side instead of hand-typed percentages.
-const getHandleStyle = (side, index, total) => {
-  if (total <= 1) return undefined;
-  const percent = ((index + 1) / (total + 1)) * 100;
-  return isVerticalSide(side) ? { top: `${percent}%` } : { left: `${percent}%` };
-};
+const getPositionPercent = (index, total) => ((index + 1) / (total + 1)) * 100;
+
+const getHandleStyle = (side, percent) =>
+  isVerticalSide(side) ? { top: `${percent}%` } : { left: `${percent}%` };
+
+const getLabelStyle = (side, percent) =>
+  isVerticalSide(side) ? { top: `${percent}%` } : { left: `${percent}%` };
 
 const groupHandlesBySide = (handles) => {
   const groups = {};
@@ -34,7 +38,30 @@ const groupHandlesBySide = (handles) => {
 
 export const BaseNode = ({ id, data, spec }) => {
   const updateNodeField = useStore((state) => state.updateNodeField);
-  const handlesBySide = groupHandlesBySide(spec.handles);
+  const removeStaleEdges = useStore((state) => state.removeStaleEdges);
+  const updateNodeInternals = useUpdateNodeInternals();
+
+  const fieldValues = {};
+  spec.fields.forEach((field) => {
+    const defaultValue =
+      typeof field.default === 'function' ? field.default(id) : field.default;
+    fieldValues[field.key] = data?.[field.key] ?? defaultValue;
+  });
+
+  const extraHandles = spec.getExtraHandles ? spec.getExtraHandles(fieldValues) : [];
+  const handles = [...spec.handles, ...extraHandles];
+  const handlesBySide = groupHandlesBySide(handles);
+
+  // ReactFlow caches handle positions per node - if the handle set changes
+  // after the first render (e.g. a new {{variable}} was typed), it must be
+  // told explicitly or existing connection lines won't reposition.
+  const handleKey = handles.map((handle) => `${handle.side}:${handle.id}`).join('|');
+  useEffect(() => {
+    updateNodeInternals(id);
+    const validHandleIds = handles.map((handle) => `${id}-${handle.id}`);
+    removeStaleEdges(id, validHandleIds);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, handleKey, updateNodeInternals, removeStaleEdges]);
 
   return (
     <div className="node">
@@ -42,31 +69,36 @@ export const BaseNode = ({ id, data, spec }) => {
       {spec.description && <div className="node-description">{spec.description}</div>}
       {spec.fields.length > 0 && (
         <div className="node-fields">
-          {spec.fields.map((field) => {
-            const defaultValue =
-              typeof field.default === 'function' ? field.default(id) : field.default;
-            const value = data?.[field.key] ?? defaultValue;
-            return (
-              <NodeField
-                key={field.key}
-                field={field}
-                value={value}
-                onChange={(newValue) => updateNodeField(id, field.key, newValue)}
-              />
-            );
-          })}
+          {spec.fields.map((field) => (
+            <NodeField
+              key={field.key}
+              field={field}
+              value={fieldValues[field.key]}
+              onChange={(newValue) => updateNodeField(id, field.key, newValue)}
+            />
+          ))}
         </div>
       )}
-      {Object.entries(handlesBySide).map(([side, handles]) =>
-        handles.map((handle, index) => (
-          <Handle
-            key={handle.id}
-            type={handle.type}
-            position={SIDE_TO_POSITION[side]}
-            id={`${id}-${handle.id}`}
-            style={getHandleStyle(side, index, handles.length)}
-          />
-        ))
+      {Object.entries(handlesBySide).map(([side, sideHandles]) =>
+        sideHandles.map((handle, index) => {
+          const percent = getPositionPercent(index, sideHandles.length);
+          return (
+            <div key={handle.id}>
+              <Handle
+                type={handle.type}
+                position={SIDE_TO_POSITION[side]}
+                id={`${id}-${handle.id}`}
+                style={getHandleStyle(side, percent)}
+              />
+              <span
+                className={`handle-label handle-label-${side}`}
+                style={getLabelStyle(side, percent)}
+              >
+                {handle.label ?? handle.id}
+              </span>
+            </div>
+          );
+        })
       )}
     </div>
   );
