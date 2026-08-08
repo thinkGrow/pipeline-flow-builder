@@ -19,6 +19,9 @@ backend/.venv/
 # assessment instructions (not part of the solution)
 *.pdf
 
+# personal recording/prep notes (not part of the solution)
+RECORDING_SCRIPT.md
+
 # misc
 .DS_Store
 **/.DS_Store
